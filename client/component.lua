@@ -1,71 +1,72 @@
 local _pzs = {}
 local _inPoly = false
 local _menu = false
-local _apartmentZones = {}
 
-AddEventHandler('onClientResourceStart', function(resource)
-	if resource == GetCurrentResourceName() then
-		Wait(1000)
-		for k, v in ipairs(GlobalState["Apartments"]) do
-			local aptId = string.format("apt-%s", v)
-			local apt = GlobalState[string.format("Apartment:%s", v)]
+CreateThread(function()
+	for k, v in ipairs(GlobalState["Apartments"]) do
+		local aptId = string.format("apt-%s", v)
+		local apt = GlobalState[string.format("Apartment:%s", v)]
 
-			exports['pulsar-polyzone']:CreateBox(aptId, apt.coords, apt.length, apt.width, apt.options, {
-				tier = k
-			})
+		plsr.Polyzone.Create:Box(aptId, apt.coords, apt.length, apt.width, apt.options, {
+			tier = k
+		})
 
-			exports["pulsar-blips"]:Add(aptId, apt.name, apt.coords, 475, 25)
-			_pzs[aptId] = {
-				name = apt.name,
-				id = apt.id,
-			}
-		end
+		plsr.Blips:Add(aptId, apt.name, apt.coords, 475, 25)
+		_pzs[aptId] = {
+			name = apt.name,
+			id = apt.id,
+		}
+	end
 
-		exports['pulsar-hud']:InteractionRegisterMenu("apt-exit", "Exit Apartment", "door-open", function(data)
-			exports['pulsar-hud']:InteractionHide()
-			exports['pulsar-apartments']:Exit()
-		end, function()
-			if
-				not LocalPlayer.state.isDead
-				and GlobalState[string.format("%s:", LocalPlayer.state.ID)] ~= nil
-			then
-				local p = GlobalState[string.format(
-					"Apartment:%s",
-					LocalPlayer.state.inApartment.type
-				)]
+	plsr.Interaction:RegisterMenu("apt-exit", "Exit Apartment", "door-open", function(data)
+		plsr.Interaction:Hide()
+		plsr.Apartment:Exit()
+	end, function()
+		if
+			not plsr.State.flags.isDead
+			and GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)] ~= nil
+		then
+			local p = GlobalState[string.format(
+				"Apartment:%s",
+				plsr.State.flags.inApartment.type
+			)]
 
-				local dist = #(
-					vector3(LocalPlayer.state.myPos.x, LocalPlayer.state.myPos.y, LocalPlayer.state.myPos.z)
+			local dist = #(
+					vector3(plsr.State.flags.position.x, plsr.State.flags.position.y, plsr.State.flags.position.z)
 					- vector3(p.interior.spawn.x, p.interior.spawn.y, p.interior.spawn.z)
 				)
-				return dist <= 2.0
-			else
-				return false
-			end
-		end)
+			return dist <= 2.0
+		else
+			return false
+		end
+	end)
 
-		-- exports['pulsar-hud']:InteractionRegisterMenu("apt-visitors", "Check Visitors", "hand-back-fist", function(data)
-		-- 	exports['pulsar-hud']:InteractionHide()
-		-- 	CheckVisitors()
-		-- end, function()
-		-- 	if GlobalState[string.format("%s:Apartment", LocalPlayer.state.ID)] ~= nil then
-		-- 		local p = GlobalState[string.format(
-		-- 			"Apartment:%s",
-		-- 			GlobalState[string.format(
-		-- 				"Apartment:Interior:%s",
-		-- 				GlobalState[string.format("%s:Apartment", LocalPlayer.state.ID)]
-		-- 			)]
-		-- 		)]
-		-- 		local dist = #(
-		-- 				vector3(LocalPlayer.state.myPos.x, LocalPlayer.state.myPos.y, LocalPlayer.state.myPos.z)
-		-- 				- vector3(p.interior.spawn.x, p.interior.spawn.y, p.interior.spawn.z)
-		-- 			)
-		-- 		return dist <= 2.0
-		-- 	else
-		-- 		return false
-		-- 	end
-		-- end)
-	end
+	-- Interaction:RegisterMenu("apt-visitors", "Check Visitors", "hand-back-fist", function(data)
+	-- 	Interaction:Hide()
+	-- 	CheckVisitors()
+	-- end, function()
+	-- 	if GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)] ~= nil then
+	-- 		local p = GlobalState[string.format(
+	-- 			"Apartment:%s",
+	-- 			GlobalState[string.format(
+	-- 				"Apartment:Interior:%s",
+	-- 				GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)]
+	-- 			)]
+	-- 		)]
+	-- 		local dist = #(
+	-- 				vector3(plsr.State.flags.position.x, plsr.State.flags.position.y, plsr.State.flags.position.z)
+	-- 				- vector3(p.interior.spawn.x, p.interior.spawn.y, p.interior.spawn.z)
+	-- 			)
+	-- 		return dist <= 2.0
+	-- 	else
+	-- 		return false
+	-- 	end
+	-- end)
+end)
+
+
+AddEventHandler("Proxy:Shared:RegisterReady", function()
+	exports["pulsar_core"]:RegisterComponent("Apartment", _APTS)
 end)
 
 RegisterNetEvent("Characters:Client:Spawn", function()
@@ -73,12 +74,12 @@ RegisterNetEvent("Characters:Client:Spawn", function()
 		local aptId = string.format("apt-%s", v)
 		local apt = GlobalState[string.format("Apartment:%s", v)]
 
-		exports["pulsar-blips"]:Add(aptId, apt.name, apt.coords, 475, 25)
+		plsr.Blips:Add(aptId, apt.name, apt.coords, 475, 25)
 	end
 end)
 
 -- function CheckVisitors()
--- 	exports["pulsar-core"]:ServerCallback("Apartment:GetRequests", {}, function(requets)
+-- 	Callbacks:ServerCallback("Apartment:GetRequests", {}, function(requets)
 -- 		if #reqeusts > 0 then
 -- 			local menu = {
 -- 				label = _pzs[_inPoly].name,
@@ -112,15 +113,15 @@ end)
 
 -- 			menu.items = menu
 
--- 			exports['pulsar-hud']:ListMenuShow(menu)
+-- 			ListMenu:Show(menu)
 -- 		else
--- 			exports["pulsar-hud"]:Notification("error", "You Have No Requesting Visitors")
+-- 			Notification:Error("You Have No Requesting Visitors")
 -- 		end
 -- 	end)
 -- end
 
 RegisterNetEvent("Apartment:Client:InnerStuff", function(aptId, unit, wakeUp)
-	while GlobalState[string.format("%s:", LocalPlayer.state.ID)] == nil do
+	while GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)] == nil do
 		Wait(10)
 		print("Interior Stuff Waiting, This Shouldn't Spam")
 	end
@@ -129,150 +130,143 @@ RegisterNetEvent("Apartment:Client:InnerStuff", function(aptId, unit, wakeUp)
 	TriggerEvent("Interiors:Enter", vector3(p.interior.spawn.x, p.interior.spawn.y, p.interior.spawn.z))
 
 	if wakeUp then
-		SetTimeout(250, function()
-			exports['pulsar-animations']:EmotesWakeUp(p.interior.wakeup)
+		Citizen.SetTimeout(250, function()
+			plsr.Animations.Emotes:WakeUp(p.interior.wakeup)
 		end)
 	end
 
-	local exitZoneId = exports.ox_target:addBoxZone({
-		name = string.format("apt-%s-exit", aptId),
-		coords = p.interior.locations.exit.coords,
-		size = vec3(p.interior.locations.exit.width, p.interior.locations.exit.length,
-			math.abs(p.interior.locations.exit.options.maxZ - p.interior.locations.exit.options.minZ)),
-		rotation = p.interior.locations.exit.options.heading or 0,
-		debug = p.interior.locations.exit.options.debugPoly or false,
-		options = {
+	plsr.Targeting.Zones:AddBox(
+		string.format("apt-%s-exit", aptId),
+		"door-open",
+		p.interior.locations.exit.coords,
+		p.interior.locations.exit.length,
+		p.interior.locations.exit.width,
+		p.interior.locations.exit.options,
+		{
 			{
-				name = "apt_exit",
-				label = "Exit",
-				icon = "fas fa-door-open",
-				onSelect = function()
-					TriggerEvent("Apartment:Client:ExitEvent", unit)
-				end,
-				distance = 3.0,
+				icon = "door-open",
+				text = "Exit",
+				event = "Apartment:Client:ExitEvent",
+				data = unit,
 			},
 		},
-	})
-	_apartmentZones[string.format("apt-%s-exit", aptId)] = exitZoneId
+		3.0,
+		true
+	)
 
-	local logoutZoneId = exports.ox_target:addBoxZone({
-		name = string.format("apt-%s-logout", aptId),
-		coords = p.interior.locations.logout.coords,
-		size = vec3(p.interior.locations.logout.width, p.interior.locations.logout.length,
-			math.abs(p.interior.locations.logout.options.maxZ - p.interior.locations.logout.options.minZ)),
-		rotation = p.interior.locations.logout.options.heading or 0,
-		debug = p.interior.locations.logout.options.debugPoly or false,
-		options = {
+	plsr.Targeting.Zones:AddBox(
+		string.format("apt-%s-logout", aptId),
+		"bed",
+		p.interior.locations.logout.coords,
+		p.interior.locations.logout.length,
+		p.interior.locations.logout.width,
+		p.interior.locations.logout.options,
+		{
 			{
-				name = "apt_logout",
-				label = "Switch Characters",
-				icon = "fas fa-bed",
-				onSelect = function()
-					TriggerEvent("Apartment:Client:Logout", unit)
-				end,
-				distance = 3.0,
-				canInteract = function()
-					return unit == LocalPlayer.state.Character:GetData("SID")
+				icon = "bed",
+				text = "Switch Characters",
+				event = "Apartment:Client:Logout",
+				data = unit,
+				isEnabled = function(data)
+					return unit == plsr.State.character.SID
 				end,
 			},
 		},
-	})
-	_apartmentZones[string.format("apt-%s-logout", aptId)] = logoutZoneId
+		3.0,
+		true
+	)
 
-	local wardrobeZoneId = exports.ox_target:addBoxZone({
-		name = string.format("apt-%s-wardrobe", aptId),
-		coords = p.interior.locations.wardrobe.coords,
-		size = vec3(p.interior.locations.wardrobe.width, p.interior.locations.wardrobe.length,
-			math.abs(p.interior.locations.wardrobe.options.maxZ - p.interior.locations.wardrobe.options.minZ)),
-		rotation = p.interior.locations.wardrobe.options.heading or 0,
-		debug = p.interior.locations.wardrobe.options.debugPoly or false,
-		options = {
+	plsr.Targeting.Zones:AddBox(
+		string.format("apt-%s-wardrobe", propertyId),
+		"shirt",
+		p.interior.locations.wardrobe.coords,
+		p.interior.locations.wardrobe.length,
+		p.interior.locations.wardrobe.width,
+		p.interior.locations.wardrobe.options,
+		{
 			{
-				name = "apt_wardrobe",
-				label = "Wardrobe",
-				icon = "fas fa-shirt",
-				onSelect = function()
-					TriggerEvent("Apartment:Client:Wardrobe", unit)
-				end,
-				distance = 3.0,
-				canInteract = function()
-					return unit == LocalPlayer.state.Character:GetData("SID")
+				icon = "bars-staggered",
+				text = "Wardrobe",
+				event = "Apartment:Client:Wardrobe",
+				data = unit,
+				isEnabled = function(data)
+					return unit == plsr.State.character.SID
 				end,
 			},
 		},
-	})
-	_apartmentZones[string.format("apt-%s-wardrobe", aptId)] = wardrobeZoneId
+		3.0,
+		true
+	)
 
-	local stashZoneId = exports.ox_target:addBoxZone({
-		name = string.format("apt-%s-stash", aptId),
-		coords = p.interior.locations.stash.coords,
-		size = vec3(p.interior.locations.stash.width, p.interior.locations.stash.length,
-			math.abs(p.interior.locations.stash.options.maxZ - p.interior.locations.stash.options.minZ)),
-		rotation = p.interior.locations.stash.options.heading or 0,
-		debug = p.interior.locations.stash.options.debugPoly or false,
-		options = {
+	plsr.Targeting.Zones:AddBox(
+		string.format("property-%s-stash", propertyId),
+		"toolbox",
+		p.interior.locations.stash.coords,
+		p.interior.locations.stash.length,
+		p.interior.locations.stash.width,
+		p.interior.locations.stash.options,
+		{
 			{
-				name = "apt_stash",
-				label = "Stash",
-				icon = "fas fa-box",
-				onSelect = function()
-					TriggerEvent("Apartment:Client:Stash", aptId)
-				end,
-				distance = 2.0,
+				icon = "toolbox",
+				text = "Stash",
+				event = "Apartment:Client:Stash",
+				data = propertyId,
 			},
 		},
-	})
-	_apartmentZones[string.format("apt-%s-stash", aptId)] = stashZoneId
+		2.0,
+		true
+	)
 
+	plsr.Targeting.Zones:Refresh()
 	Wait(1000)
-	exports["pulsar-sync"]:Stop(1)
+	plsr.Sync:Stop(1)
 end)
 
 AddEventHandler("Apartment:Client:ExitEvent", function()
-	exports['pulsar-apartments']:Exit()
+	plsr.Apartment:Exit()
 end)
 
 AddEventHandler("Polyzone:Enter", function(id, testedPoint, insideZones, data)
-	if _pzs[id] and string.format("apt-%s", LocalPlayer.state.Character:GetData("Apartment") or 1) == id then
+	if _pzs[id] and string.format("apt-%s", plsr.State.character.Apartment or 1) == id then
 		_inPoly = {
 			id = id,
 			data = data.tier
 		}
 
 		-- local str = "{keybind}secondary_action{/keybind} View Options"
-		-- if string.format("apt-%s", LocalPlayer.state.Character:GetData("Apartment") or 1) == id then
+		-- if string.format("apt-%s", plsr.State.character.Apartment or 1) == id then
 		-- 	str = string.format("{keybind}primary_action{/keybind}: Enter {keybind}secondary_action{/keybind}: Other", _pzs[id].name)
 		-- end
 
 		local str = string.format("{keybind}primary_action{/keybind} To Enter %s", _pzs[id].name)
 
-		exports['pulsar-hud']:ActionShow('apt-enter', str)
+		plsr.Action:Show('apt-enter', str)
 	end
 end)
 
 AddEventHandler("Polyzone:Exit", function(id, testedPoint, insideZones, data)
-	if _inPoly and _inPoly.id and id == _inPoly.id then
+	if id == _inPoly?.id then
 		_inPoly = nil
-		exports['pulsar-hud']:ActionHide('apt-enter')
+		plsr.Action:Hide('apt-enter')
 	end
 end)
 
 AddEventHandler("Keybinds:Client:KeyUp:primary_action", function()
 	if
 		_inPoly
-		and (LocalPlayer.state.Character:GetData("Apartment") or 1) == _inPoly.data
-		and not LocalPlayer.state.isDead and GetVehiclePedIsIn(LocalPlayer.state.ped) == 0
+		and (plsr.State.character.Apartment or 1) == _inPoly.data
+		and not plsr.State.flags.isDead and GetVehiclePedIsIn(PlayerPedId()) == 0
 	then
-		exports['pulsar-apartments']:Enter(_inPoly.data, -1)
+		plsr.Apartment:Enter(_inPoly.data, -1)
 	end
 end)
 
 AddEventHandler("Apartment:Client:Enter", function(data)
-	exports['pulsar-apartments']:Enter(data)
+	plsr.Apartment:Enter(data)
 end)
 
 AddEventHandler("Apartment:Client:RequestEntry", function(data)
-	exports['pulsar-hud']:InputShow("Request Entry", "Unit Number (Owner State ID)", {
+	plsr.Input:Show("Request Entry", "Unit Number (Owner State ID)", {
 		{
 			id = "unit",
 			type = "number",
@@ -286,160 +280,137 @@ AddEventHandler("Apartment:Client:RequestEntry", function(data)
 end)
 
 AddEventHandler("Apartment:Client:DoRequestEntry", function(values, data)
-	exports["pulsar-core"]:ServerCallback("Apartment:RequestEntry", {
+	plsr.Callbacks:ServerCallback("Apartment:RequestEntry", {
 		inZone = data,
 		target = values.unit,
 	})
 end)
 
-AddEventHandler("Apartment:Client:Stash", function(response)
-	exports['pulsar-apartments']:ExtrasStash()
+AddEventHandler("Apartment:Client:Stash", function(t, data)
+	plsr.Apartment.Extras:Stash()
 end)
 
-AddEventHandler("Apartment:Client:Wardrobe", function(response)
-	exports['pulsar-apartments']:ExtrasWardrobe()
+AddEventHandler("Apartment:Client:Wardrobe", function(t, data)
+	plsr.Apartment.Extras:Wardrobe()
 end)
 
-AddEventHandler("Apartment:Client:Logout", function(response)
-	exports['pulsar-apartments']:ExtrasLogout()
+AddEventHandler("Apartment:Client:Logout", function(t, data)
+	plsr.Apartment.Extras:Logout()
 end)
 
-exports("Enter", function(tier, id)
-	exports["pulsar-core"]:ServerCallback("Apartment:Enter", {
-		id = id or -1,
-		tier = tier,
-	}, function(s)
-		if s then
-			exports["pulsar-sounds"]:PlayOne("door_open.ogg", 0.15)
+_APTS = {
+	Enter = function(self, tier, id)
+		plsr.Callbacks:ServerCallback("Apartment:Enter", {
+			id = id or -1,
+			tier = tier,
+		}, function(s)
+			if s then
+				plsr.Sounds.Play:One("door_open.ogg", 0.15)
 
+				DoScreenFadeOut(1000)
+				while not IsScreenFadedOut() do
+					Wait(10)
+				end
+
+				local p = GlobalState[string.format("Apartment:%s", s)]
+
+				FreezeEntityPosition(PlayerPedId(), true)
+				Wait(50)
+				SetEntityCoords(
+					PlayerPedId(),
+					p.interior.spawn.x,
+					p.interior.spawn.y,
+					p.interior.spawn.z,
+					0,
+					0,
+					0,
+					false
+				)
+				Wait(100)
+				SetEntityHeading(PlayerPedId(), p.interior.spawn.h)
+
+				local time = GetGameTimer()
+				while (not HasCollisionLoadedAroundEntity(PlayerPedId()) and (GetGameTimer() - time) < 10000) do
+					Wait(100)
+				end
+
+				FreezeEntityPosition(PlayerPedId(), false)
+
+				DoScreenFadeIn(1000)
+				while not IsScreenFadedIn() do
+					Wait(10)
+				end
+			end
+		end)
+	end,
+	Exit = function(self)
+		local apartmentId = GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)]
+		local p = GlobalState[string.format(
+			"Apartment:%s",
+			plsr.State.flags.inApartment.type
+		)]
+
+		plsr.Callbacks:ServerCallback("Apartment:Exit", {}, function()
 			DoScreenFadeOut(1000)
 			while not IsScreenFadedOut() do
 				Wait(10)
 			end
 
-			local p = GlobalState[string.format("Apartment:%s", s)]
+			TriggerEvent("Interiors:Exit")
+			plsr.Sync:Start()
 
-			FreezeEntityPosition(PlayerPedId(), true)
-			Wait(50)
-			SetEntityCoords(
-				PlayerPedId(),
-				p.interior.spawn.x,
-				p.interior.spawn.y,
-				p.interior.spawn.z,
-				0,
-				0,
-				0,
-				false
-			)
+			plsr.Sounds.Play:One("door_close.ogg", 0.3)
+			Wait(200)
+
+			SetEntityCoords(PlayerPedId(), p.coords.x, p.coords.y, p.coords.z, 0, 0, 0, false)
 			Wait(100)
-			SetEntityHeading(PlayerPedId(), p.interior.spawn.h)
+			SetEntityHeading(PlayerPedId(), p.heading)
 
-			local time = GetGameTimer()
-			while (not HasCollisionLoadedAroundEntity(PlayerPedId()) and (GetGameTimer() - time) < 10000) do
-				Wait(100)
+			for k, v in pairs(p.interior.locations) do
+				plsr.Targeting.Zones:RemoveZone(string.format("apt-%s-%s", k, apartmentId))
 			end
 
-			FreezeEntityPosition(PlayerPedId(), false)
+			plsr.Targeting.Zones:Refresh()
 
 			DoScreenFadeIn(1000)
 			while not IsScreenFadedIn() do
 				Wait(10)
 			end
+		end)
+	end,
+	GetNearApartment = function(self)
+		if _inPoly?.id ~= nil and _pzs[_inPoly?.id]?.id ~= nil then
+			return GlobalState[string.format("Apartment:%s", _pzs[_inPoly?.id].id)]
+		else
+			return nil
 		end
-	end)
-end)
-
-exports("Exit", function()
-	local apartmentId = GlobalState[string.format("%s:", LocalPlayer.state.ID)]
-	local p = GlobalState[string.format(
-		"Apartment:%s",
-		LocalPlayer.state.inApartment.type
-	)]
-
-	exports["pulsar-core"]:ServerCallback("Apartment:Exit", {}, function()
-		DoScreenFadeOut(1000)
-		while not IsScreenFadedOut() do
-			Wait(10)
-		end
-
-		TriggerEvent("Interiors:Exit")
-		exports["pulsar-sync"]:Start()
-
-		exports["pulsar-sounds"]:PlayOne("door_close.ogg", 0.3)
-		Wait(200)
-
-		SetEntityCoords(PlayerPedId(), p.coords.x, p.coords.y, p.coords.z, 0, 0, 0, false)
-		Wait(100)
-		SetEntityHeading(PlayerPedId(), p.heading)
-
-		for zoneName, zoneId in pairs(_apartmentZones) do
-			if string.find(zoneName, string.format("apt-%s-", apartmentId)) then
-				if exports.ox_target:zoneExists(zoneId) then
-					exports.ox_target:removeZone(zoneId)
+	end,
+	Extras = {
+		Stash = function(self)
+			plsr.Callbacks:ServerCallback("Apartment:Validate", {
+				id = GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)],
+				type = "stash",
+			})
+		end,
+		Wardrobe = function(self)
+			plsr.Callbacks:ServerCallback("Apartment:Validate", {
+				id = GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)],
+				type = "wardrobe",
+			}, function(state)
+				if state then
+					plsr.Wardrobe:Show()
 				end
-				_apartmentZones[zoneName] = nil
-			end
-		end
-
-		DoScreenFadeIn(1000)
-		while not IsScreenFadedIn() do
-			Wait(10)
-		end
-	end)
-end)
-
-exports("GetNearApartment", function()
-	if _inPoly and _inPoly.id and _pzs[_inPoly.id] and _pzs[_inPoly.id].id then
-		return GlobalState[string.format("Apartment:%s", _pzs[_inPoly.id].id)]
-	else
-		return nil
-	end
-end)
-
-exports("ExtrasStash", function()
-	local apartmentType = LocalPlayer.state.inApartment.type
-	local characterSID = LocalPlayer.state.Character:GetData("SID")
-
-	if characterSID then
-		exports.ox_inventory:openInventory('stash', {
-			id = string.format("apartment_%s", apartmentType),
-			owner = characterSID
-		})
-	end
-end)
-
-exports("ExtrasWardrobe", function()
-	exports["pulsar-core"]:ServerCallback("Apartment:Validate", {
-		id = GlobalState[string.format("%s:", LocalPlayer.state.ID)],
-		type = "wardrobe",
-	}, function(state)
-		if state then
-			exports['pulsar-ped']:WardrobeShow()
-		end
-	end)
-end)
-
-exports("ExtrasLogout", function()
-	exports["pulsar-core"]:ServerCallback("Apartment:Validate", {
-		id = GlobalState[string.format("%s:", LocalPlayer.state.ID)],
-		type = "logout",
-	}, function(state)
-		if state then
-			exports['pulsar-characters']:Logout()
-		end
-	end)
-end)
-
-RegisterNetEvent("Apartment:Client:Enter", function(targetType, target, wakeUp)
-	exports['pulsar-apartments']:ClientEnter(targetType, target, wakeUp)
-end)
-
-RegisterNetEvent("Characters:Client:Logout")
-AddEventHandler("Characters:Client:Logout", function()
-	for k, v in pairs(_apartmentZones) do
-		if exports.ox_target:zoneExists(v) then
-			exports.ox_target:removeZone(v)
-		end
-		_apartmentZones[k] = nil
-	end
-end)
+			end)
+		end,
+		Logout = function(self)
+			plsr.Callbacks:ServerCallback("Apartment:Validate", {
+				id = GlobalState[string.format("%s:Apartment", plsr.State.flags.ID)],
+				type = "logout",
+			}, function(state)
+				if state then
+					plsr.Characters:Logout()
+				end
+			end)
+		end,
+	},
+}

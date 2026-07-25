@@ -6,13 +6,18 @@
 
 # PULSAR-APARTMENTS
 
-### Player housing — apartment ownership and interior routing
+### Apartment ownership — `plsr.Apartment`, the "spawn inside your place" system the character creator hands off to
 
 <br/>
 
 ![Lua](https://img.shields.io/badge/Lua_5.4-2C2D72?style=flat-square&logo=lua&logoColor=white)
 ![FiveM](https://img.shields.io/badge/FiveM-F40552?style=flat-square)
-![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=flat-square&logo=mariadb&logoColor=white)
+
+<br/>
+
+<sub>Enjoy the framework? A coffee helps keep active development, hardening, and support going.</sub>
+
+<a href="https://buymeacoffee.com/pulsarframework"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 180px !important;" /></a>
 
 <br/>
 
@@ -24,15 +29,15 @@
 
 ## Overview
 
-Player housing system for Pulsar Framework. Handles apartment ownership, key sharing, and routing players into private interior buckets. Integrates with the character system for persistent ownership storage.
+Registers `plsr.Apartment`. `Apartment:SpawnInside` is the callback `pulsar_ped`'s character creator flow calls once a new character is done — placing them inside their starting apartment rather than the open world.
 
 ---
 
 ## Dependencies
 
-- `pulsar-core` — framework core, routing buckets
-- `pulsar-characters` — character ownership data
-- `oxmysql` — apartment persistence
+- `pulsar_core` — framework core
+- `pulsar_characters` — the `Characters:Spawning` middleware hook this ties into
+- `pulsar_pwnzor` — anti-cheat check loaded alongside every resource
 
 ---
 

@@ -1,18 +1,18 @@
 function RegisterMiddleware()
-	exports['pulsar-core']:MiddlewareAdd("Characters:Creating", function(source, cData)
+	plsr.Middleware:Add("Characters:Creating", function(source, cData)
 		return { {
 			Apartment = 1,
 		} }
 	end)
 
-	-- exports['pulsar-core']:MiddlewareAdd("Characters:Spawning", function(source)
-	-- 	local char = exports['pulsar-characters']:FetchCharacterSource(source)
+	-- Middleware:Add("Characters:Spawning", function(source)
+	-- 	local char = Fetch:CharacterSource(source)
 	-- 	if char then
 	-- 		GlobalState[string.format("Apartment:Interior:%s", char:GetData("SID"))] = char:GetData("Apartment") or 1
 	-- 	end
 	-- end, 2)
 
-	exports['pulsar-core']:MiddlewareAdd("Characters:GetSpawnPoints", function(source, charId, cData)
+	plsr.Middleware:Add("Characters:GetSpawnPoints", function(source, charId, cData)
 		local spawns = {}
 
 		local apt = _aptData[cData.Apartment or 1]
